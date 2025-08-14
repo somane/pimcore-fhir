@@ -22,7 +22,10 @@
     "symfony/amqp-messenger": "^6.2 || ^7.2",
     "symfony/apache-pack": "^1.0",
     "symfony/dotenv": "^6.2 || ^7.2",
-    "symfony/runtime": "^6.2"
+    "symfony/runtime": "^6.2",
+    "symfony/serializer": "*",
+    "symfony/uid": "*",
+    "symfony/validator": "*"
   },
   "require-dev": {
     "codeception/codeception": "^5.0.3",
