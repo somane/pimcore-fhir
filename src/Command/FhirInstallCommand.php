@@ -6,6 +6,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Pimcore\Model\DataObject\ClassDefinition;
+use Pimcore\Model\DataObject\ClassDefinition\Data;
 use Pimcore\Model\DataObject\Folder;
 
 class FhirInstallCommand extends Command
@@ -69,22 +70,24 @@ class FhirInstallCommand extends Command
 
         foreach ($classes as $name => $config) {
             try {
-                $classDefinition = ClassDefinition::getByName($name);
-                if ($classDefinition) {
+                // Vérifier si la classe existe déjà
+                $existingClass = ClassDefinition::getByName($name);
+                if ($existingClass) {
                     $io->warning("La classe $name existe déjà");
                     continue;
                 }
 
+                // Créer la nouvelle classe
                 $class = new ClassDefinition();
                 $class->setName($name);
                 $class->setGroup('FHIR');
                 
-                // Importer la configuration JSON
-                $json = json_encode($config);
-                $class = ClassDefinition::getByName($name);
-                if (!$class) {
-                    ClassDefinition\Service::importClassDefinitionFromJson($json, true);
-                }
+                // Construire la structure de layout
+                $layout = $this->buildLayout($config['layouts'][0]);
+                $class->setLayoutDefinitions($layout);
+                
+                // Sauvegarder la classe
+                $class->save();
                 
                 $io->success("Classe $name créée");
             } catch (\Exception $e) {
@@ -93,38 +96,142 @@ class FhirInstallCommand extends Command
         }
     }
 
+    /**
+     * Construit récursivement le layout à partir de la configuration
+     */
+    private function buildLayout(array $config)
+    {
+        $type = $config['fieldtype'];
+        
+        // Pour les panels et autres containers
+        if ($type === 'panel') {
+            $layout = new ClassDefinition\Layout\Panel();
+            $layout->setName($config['name'] ?? 'panel');
+            
+            if (isset($config['title'])) {
+                $layout->setTitle($config['title']);
+            }
+            
+            // Ajouter les enfants récursivement
+            if (isset($config['children']) && is_array($config['children'])) {
+                foreach ($config['children'] as $childConfig) {
+                    $child = $this->buildLayout($childConfig);
+                    if ($child) {
+                        $layout->addChild($child);
+                    }
+                }
+            }
+            
+            return $layout;
+        }
+        
+        // Pour les champs de données
+        return $this->createDataField($config);
+    }
+
+    /**
+     * Crée un champ de données selon son type
+     */
+    private function createDataField(array $config)
+    {
+        $type = $config['fieldtype'];
+        $field = null;
+        
+        switch ($type) {
+            case 'input':
+                $field = new Data\Input();
+                if (isset($config['columnLength'])) {
+                    $field->setColumnLength($config['columnLength']);
+                }
+                break;
+                
+            case 'email':
+                $field = new Data\Email();
+                break;
+                
+            case 'textarea':
+                $field = new Data\Textarea();
+                if (isset($config['height'])) {
+                    $field->setHeight($config['height']);
+                }
+                break;
+                
+            case 'date':
+                $field = new Data\Date();
+                break;
+                
+            case 'datetime':
+                $field = new Data\Datetime();
+                break;
+                
+            case 'select':
+                $field = new Data\Select();
+                if (isset($config['options'])) {
+                    $field->setOptions($config['options']);
+                }
+                break;
+                
+            case 'numeric':
+                $field = new Data\Numeric();
+                break;
+                
+            case 'manyToOneRelation':
+                $field = new Data\ManyToOneRelation();
+                if (isset($config['classes'])) {
+                    $field->setClasses($config['classes']);
+                }
+                break;
+                
+            default:
+                return null;
+        }
+        
+        // Propriétés communes
+        if ($field) {
+            $field->setName($config['name']);
+            
+            if (isset($config['title'])) {
+                $field->setTitle($config['title']);
+            }
+            
+            if (isset($config['mandatory'])) {
+                $field->setMandatory($config['mandatory']);
+            }
+            
+            if (isset($config['tooltip'])) {
+                $field->setTooltip($config['tooltip']);
+            }
+            
+            if (isset($config['noteditable'])) {
+                $field->setNoteditable($config['noteditable']);
+            }
+            
+            if (isset($config['index'])) {
+                $field->setIndex($config['index']);
+            }
+            
+            if (isset($config['unique'])) {
+                $field->setUnique($config['unique']);
+            }
+        }
+        
+        return $field;
+    }
+
     private function getPatientConfig(): array
     {
         return [
             "name" => "Patient",
             "group" => "FHIR",
-            "showAppLoggerTab" => true,
-            "linkGeneratorReference" => "@App\\Model\\DataObject\\Patient\\LinkGenerator",
-            "allowInherit" => false,
-            "allowVariants" => false,
-            "showFieldLookup" => false,
             "layouts" => [
                 [
                     "fieldtype" => "panel",
                     "name" => "Layout",
-                    "type" => null,
-                    "region" => null,
-                    "title" => null,
-                    "width" => null,
-                    "height" => null,
-                    "collapsible" => false,
-                    "collapsed" => false,
                     "children" => [
                         [
                             "fieldtype" => "panel",
                             "name" => "Identification",
-                            "type" => null,
-                            "region" => null,
                             "title" => "Identification",
-                            "width" => null,
-                            "height" => null,
-                            "collapsible" => false,
-                            "collapsed" => false,
                             "children" => [
                                 [
                                     "fieldtype" => "input",
@@ -211,9 +318,6 @@ class FhirInstallCommand extends Command
         return [
             "name" => "Practitioner",
             "group" => "FHIR",
-            "showAppLoggerTab" => true,
-            "allowInherit" => false,
-            "allowVariants" => false,
             "layouts" => [
                 [
                     "fieldtype" => "panel",
@@ -299,9 +403,6 @@ class FhirInstallCommand extends Command
         return [
             "name" => "Observation",
             "group" => "FHIR",
-            "showAppLoggerTab" => true,
-            "allowInherit" => false,
-            "allowVariants" => false,
             "layouts" => [
                 [
                     "fieldtype" => "panel",
@@ -412,9 +513,6 @@ class FhirInstallCommand extends Command
         return [
             "name" => "Organization",
             "group" => "FHIR",
-            "showAppLoggerTab" => true,
-            "allowInherit" => false,
-            "allowVariants" => false,
             "layouts" => [
                 [
                     "fieldtype" => "panel",
