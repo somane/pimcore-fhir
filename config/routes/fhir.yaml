@@ -2,9 +2,9 @@ fhir_api:
     resource: ../../src/Controller/FhirApiController.php
     type: annotation
 
-fhir_admin:
-    resource: ../../src/Controller/Admin/FhirAdminController.php
-    type: annotation
+#fhir_admin:
+    #resource: ../../src/Controller/Admin/FhirAdminController.php
+    #type: annotation
 
 fhir_frontend:
     resource: ../../src/Controller/FhirFrontendController.php
