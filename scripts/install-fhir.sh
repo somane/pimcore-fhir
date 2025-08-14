@@ -790,9 +790,3 @@ Les composants suivants ont été installés :
 - `GET /api/fhir/{resourceType}` : Liste des ressources
 - `GET /api/fhir/{resourceType}/{id}` : Détail d'une ressource
 - `POST /api/fhir/{resourceType}` : Création d'une ressource
-
-### Prochaines étapes
-
-1. Exécuter la commande d'installation des classes :
-   ```bash
-   bin/console app:fhir:install
