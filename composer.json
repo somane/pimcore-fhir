@@ -16,16 +16,16 @@
   "require": {
     "php": "~8.3.0 || ~8.4.0",
     "pimcore/admin-ui-classic-bundle": "*",
-    "pimcore/pimcore": "^12.0",
+    "pimcore/pimcore": "*",
     "pimcore/platform-version": "^2025.2",
     "pimcore/quill-bundle": "*",
     "symfony/amqp-messenger": "^6.2 || ^7.2",
     "symfony/apache-pack": "^1.0",
     "symfony/dotenv": "^6.2 || ^7.2",
     "symfony/runtime": "^6.2",
-    "symfony/serializer": "*",
-    "symfony/uid": "*",
-    "symfony/validator": "*"
+    "symfony/serializer": "^7.3",
+    "symfony/uid": "^7.3",
+    "symfony/validator": "^6.4"
   },
   "require-dev": {
     "codeception/codeception": "^5.0.3",

@@ -1,0 +1,58 @@
+{% extends 'layout.html.twig' %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1>Portail FHIR</h1>
+    <p>Bienvenue sur le portail FHIR de votre établissement.</p>
+    
+    <div class="row mt-4">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5>Patients</h5>
+                    <p class="display-4" id="count-patients">-</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5>Praticiens</h5>
+                    <p class="display-4" id="count-practitioners">-</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5>Observations</h5>
+                    <p class="display-4" id="count-observations">-</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5>Organisations</h5>
+                    <p class="display-4" id="count-organizations">-</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Charger les statistiques
+['Patient', 'Practitioner', 'Observation', 'Organization'].forEach(resource => {
+    fetch(`/api/fhir/${resource}?_count=0`)
+        .then(r => r.json())
+        .then(data => {
+            const id = `count-${resource.toLowerCase()}s`;
+            document.getElementById(id).textContent = data.total || 0;
+        })
+        .catch(() => {
+            console.error(`Erreur lors du chargement de ${resource}`);
+        });
+});
+</script>
+{% endblock %}
