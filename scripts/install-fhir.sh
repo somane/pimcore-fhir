@@ -790,3 +790,4 @@ Les composants suivants ont été installés :
 - `GET /api/fhir/{resourceType}` : Liste des ressources
 - `GET /api/fhir/{resourceType}/{id}` : Détail d'une ressource
 - `POST /api/fhir/{resourceType}` : Création d'une ressource
+EOF
