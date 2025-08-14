@@ -1,14 +1,59 @@
-fhir_api:
-    resource: ../../src/Controller/FhirController.php
-    type: annotation
-    prefix: /api/fhir
+# API FHIR
+fhir_api_metadata:
+    path: /api/fhir/metadata
+    controller: App\Controller\FhirController::metadata
+    methods: GET
 
-fhir_admin:
-    resource: ../../src/Controller/Admin/FhirController.php
-    type: annotation
-    prefix: /admin/fhir
+fhir_api_list:
+    path: /api/fhir/{resourceType}
+    controller: App\Controller\FhirController::list
+    methods: GET
+    requirements:
+        resourceType: 'Patient|Practitioner|Observation|Organization'
 
-fhir_frontend:
-    resource: ../../src/Controller/FhirPortalController.php
-    type: annotation
-    prefix: /fhir
+fhir_api_read:
+    path: /api/fhir/{resourceType}/{id}
+    controller: App\Controller\FhirController::read
+    methods: GET
+    requirements:
+        resourceType: 'Patient|Practitioner|Observation|Organization'
+        id: '\d+'
+
+fhir_api_create:
+    path: /api/fhir/{resourceType}
+    controller: App\Controller\FhirController::create
+    methods: POST
+    requirements:
+        resourceType: 'Patient|Practitioner|Observation|Organization'
+
+fhir_api_update:
+    path: /api/fhir/{resourceType}/{id}
+    controller: App\Controller\FhirController::update
+    methods: PUT
+    requirements:
+        resourceType: 'Patient|Practitioner|Observation|Organization'
+        id: '\d+'
+
+# Frontend FHIR
+fhir_portal_index:
+    path: /fhir
+    controller: App\Controller\FhirPortalController::index
+    methods: GET
+
+fhir_portal_patient:
+    path: /fhir/patient/{id}
+    controller: App\Controller\FhirPortalController::patientDetail
+    methods: GET
+    requirements:
+        id: '\d+'
+
+# Admin FHIR
+admin_fhir_stats:
+    path: /admin/fhir/stats
+    controller: App\Controller\Admin\FhirAdminController::stats
+    methods: GET
+
+admin_fhir_import:
+    path: /admin/fhir/import
+    controller: App\Controller\Admin\FhirAdminController::import
+    methods: POST

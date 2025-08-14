@@ -1,0 +1,14 @@
+fhir_api:
+    resource: ../../src/Controller/FhirController.php
+    type: annotation
+    prefix: /api/fhir
+
+fhir_admin:
+    resource: ../../src/Controller/Admin/FhirController.php
+    type: annotation
+    prefix: /admin/fhir
+
+fhir_frontend:
+    resource: ../../src/Controller/FhirPortalController.php
+    type: annotation
+    prefix: /fhir
