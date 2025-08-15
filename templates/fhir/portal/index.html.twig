@@ -1,58 +1,308 @@
+{# templates/fhir/portal/index.html.twig - Page d'accueil du portail #}
 {% extends 'layout.html.twig' %}
 
+{% block title %}Portail FHIR - Accueil{% endblock %}
+
 {% block content %}
-<div class="container mt-5">
-    <h1>Portail FHIR</h1>
-    <p>Bienvenue sur le portail FHIR de votre établissement.</p>
+<div class="container">
+    {# Hero Section #}
+    <div class="row mb-5">
+        <div class="col-12 text-center">
+            <h1 class="display-4 mb-3">Portail FHIR</h1>
+            <p class="lead text-muted">
+                Système d'interopérabilité médicale basé sur le standard FHIR R4
+            </p>
+        </div>
+    </div>
     
-    <div class="row mt-4">
-        <div class="col-md-3">
-            <div class="card">
-                <div class="card-body text-center">
-                    <h5>Patients</h5>
-                    <p class="display-4" id="count-patients">-</p>
+    {# Statistics Cards #}
+    <div class="row mb-5">
+        <div class="col-md-3 mb-4">
+            <div class="card stat-card">
+                <div class="card-body">
+                    <i class="fas fa-user-injured resource-icon text-primary"></i>
+                    <h5 class="card-title">Patients</h5>
+                    <p class="stat-number" id="count-patients">
+                        <span class="spinner-border spinner-border-sm" role="status"></span>
+                    </p>
+                    <a href="#" class="btn btn-primary btn-sm" onclick="showResources('Patient')">
+                        Voir la liste
+                    </a>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card">
-                <div class="card-body text-center">
-                    <h5>Praticiens</h5>
-                    <p class="display-4" id="count-practitioners">-</p>
+        
+        <div class="col-md-3 mb-4">
+            <div class="card stat-card">
+                <div class="card-body">
+                    <i class="fas fa-user-md resource-icon text-success"></i>
+                    <h5 class="card-title">Praticiens</h5>
+                    <p class="stat-number" id="count-practitioners">
+                        <span class="spinner-border spinner-border-sm" role="status"></span>
+                    </p>
+                    <a href="#" class="btn btn-success btn-sm" onclick="showResources('Practitioner')">
+                        Voir la liste
+                    </a>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card">
-                <div class="card-body text-center">
-                    <h5>Observations</h5>
-                    <p class="display-4" id="count-observations">-</p>
+        
+        <div class="col-md-3 mb-4">
+            <div class="card stat-card">
+                <div class="card-body">
+                    <i class="fas fa-clipboard resource-icon text-warning"></i>
+                    <h5 class="card-title">Observations</h5>
+                    <p class="stat-number" id="count-observations">
+                        <span class="spinner-border spinner-border-sm" role="status"></span>
+                    </p>
+                    <a href="#" class="btn btn-warning btn-sm" onclick="showResources('Observation')">
+                        Voir la liste
+                    </a>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card">
-                <div class="card-body text-center">
-                    <h5>Organisations</h5>
-                    <p class="display-4" id="count-organizations">-</p>
+        
+        <div class="col-md-3 mb-4">
+            <div class="card stat-card">
+                <div class="card-body">
+                    <i class="fas fa-building resource-icon text-info"></i>
+                    <h5 class="card-title">Organisations</h5>
+                    <p class="stat-number" id="count-organizations">
+                        <span class="spinner-border spinner-border-sm" role="status"></span>
+                    </p>
+                    <a href="#" class="btn btn-info btn-sm" onclick="showResources('Organization')">
+                        Voir la liste
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {# Search Section #}
+    <div class="search-section mb-5">
+        <h2 class="mb-4">Recherche rapide</h2>
+        <form id="search-form" class="row g-3">
+            <div class="col-md-4">
+                <label for="search-type" class="form-label">Type de ressource</label>
+                <select class="form-select" id="search-type">
+                    <option value="Patient">Patient</option>
+                    <option value="Practitioner">Praticien</option>
+                    <option value="Observation">Observation</option>
+                    <option value="Organization">Organisation</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label for="search-query" class="form-label">Recherche</label>
+                <input type="text" class="form-control" id="search-query" 
+                       placeholder="Nom, identifiant...">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">&nbsp;</label>
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-search"></i> Rechercher
+                </button>
+            </div>
+        </form>
+    </div>
+    
+    {# Search Results #}
+    <div id="search-results" style="display: none;">
+        <h3>Résultats de recherche</h3>
+        <div id="results-container">
+            <!-- Les résultats seront affichés ici -->
+        </div>
+    </div>
+    
+    {# Resource List Modal #}
+    <div class="modal fade" id="resourceModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="resourceModalTitle">Liste des ressources</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="resource-list">
+                        <!-- La liste sera chargée ici -->
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
 
+{% block javascripts %}
 <script>
-// Charger les statistiques
-['Patient', 'Practitioner', 'Observation', 'Organization'].forEach(resource => {
-    fetch(`/api/fhir/${resource}?_count=0`)
-        .then(r => r.json())
+// Charger les statistiques au chargement de la page
+document.addEventListener('DOMContentLoaded', function() {
+    loadStatistics();
+});
+
+// Charger les statistiques de chaque type de ressource
+function loadStatistics() {
+    const resources = ['Patient', 'Practitioner', 'Observation', 'Organization'];
+    
+    resources.forEach(resource => {
+        fetch(`{{ path('fhir_api_list', {resourceType: '__TYPE__'}) }}`.replace('__TYPE__', resource) + '?_count=0')
+            .then(response => response.json())
+            .then(data => {
+                const elementId = `count-${resource.toLowerCase()}s`;
+                document.getElementById(elementId).textContent = data.total || 0;
+            })
+            .catch(error => {
+                console.error(`Erreur lors du chargement de ${resource}:`, error);
+                const elementId = `count-${resource.toLowerCase()}s`;
+                document.getElementById(elementId).textContent = '0';
+            });
+    });
+}
+
+// Afficher la liste des ressources
+function showResources(resourceType) {
+    const modal = new bootstrap.Modal(document.getElementById('resourceModal'));
+    document.getElementById('resourceModalTitle').textContent = `Liste des ${resourceType}s`;
+    document.getElementById('resource-list').innerHTML = '<div class="text-center"><div class="spinner-border" role="status"></div></div>';
+    
+    fetch(`{{ path('fhir_api_list', {resourceType: '__TYPE__'}) }}`.replace('__TYPE__', resourceType))
+        .then(response => response.json())
         .then(data => {
-            const id = `count-${resource.toLowerCase()}s`;
-            document.getElementById(id).textContent = data.total || 0;
+            displayResourceList(data, resourceType);
         })
-        .catch(() => {
-            console.error(`Erreur lors du chargement de ${resource}`);
+        .catch(error => {
+            document.getElementById('resource-list').innerHTML = '<div class="alert alert-danger">Erreur lors du chargement</div>';
+        });
+    
+    modal.show();
+}
+
+// Afficher la liste des ressources dans le modal
+function displayResourceList(bundle, resourceType) {
+    const container = document.getElementById('resource-list');
+    
+    if (!bundle.entry || bundle.entry.length === 0) {
+        container.innerHTML = '<p class="text-muted">Aucune ressource trouvée</p>';
+        return;
+    }
+    
+    let html = '<div class="table-responsive"><table class="table table-hover">';
+    html += '<thead><tr>';
+    
+    // Headers selon le type
+    switch(resourceType) {
+        case 'Patient':
+            html += '<th>ID</th><th>Identifiant</th><th>Nom</th><th>Prénom</th><th>Date de naissance</th><th>Actions</th>';
+            break;
+        case 'Practitioner':
+            html += '<th>ID</th><th>Numéro pro</th><th>Nom</th><th>Prénom</th><th>Spécialité</th><th>Actions</th>';
+            break;
+        case 'Observation':
+            html += '<th>ID</th><th>Code</th><th>Description</th><th>Patient</th><th>Date</th><th>Actions</th>';
+            break;
+        case 'Organization':
+            html += '<th>ID</th><th>Identifiant</th><th>Nom</th><th>Type</th><th>Téléphone</th><th>Actions</th>';
+            break;
+    }
+    
+    html += '</tr></thead><tbody>';
+    
+    bundle.entry.forEach(entry => {
+        const resource = entry.resource;
+        html += '<tr>';
+        
+        switch(resourceType) {
+            case 'Patient':
+                html += `<td>${resource.id}</td>`;
+                html += `<td>${resource.identifier?.[0]?.value || '-'}</td>`;
+                html += `<td>${resource.name?.[0]?.family || '-'}</td>`;
+                html += `<td>${resource.name?.[0]?.given?.[0] || '-'}</td>`;
+                html += `<td>${resource.birthDate || '-'}</td>`;
+                html += `<td><a href="{{ path('fhir_portal_patient', {id: '__ID__'}) }}".replace('__ID__', ${resource.id}) class="btn btn-sm btn-primary">Voir</a></td>`;
+                break;
+            // Ajouter les autres types...
+        }
+        
+        html += '</tr>';
+    });
+    
+    html += '</tbody></table></div>';
+    container.innerHTML = html;
+}
+
+// Gestion du formulaire de recherche
+document.getElementById('search-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const resourceType = document.getElementById('search-type').value;
+    const query = document.getElementById('search-query').value;
+    
+    if (!query) {
+        alert('Veuillez entrer un terme de recherche');
+        return;
+    }
+    
+    // Construire l'URL de recherche
+    let searchUrl = `{{ path('fhir_api_list', {resourceType: '__TYPE__'}) }}`.replace('__TYPE__', resourceType);
+    
+    // Ajouter les paramètres de recherche selon le type
+    if (resourceType === 'Patient' || resourceType === 'Practitioner') {
+        searchUrl += `?name=${encodeURIComponent(query)}`;
+    } else {
+        searchUrl += `?identifier=${encodeURIComponent(query)}`;
+    }
+    
+    // Afficher la section résultats
+    document.getElementById('search-results').style.display = 'block';
+    document.getElementById('results-container').innerHTML = '<div class="text-center"><div class="spinner-border" role="status"></div></div>';
+    
+    // Effectuer la recherche
+    fetch(searchUrl)
+        .then(response => response.json())
+        .then(data => {
+            displaySearchResults(data, resourceType);
+        })
+        .catch(error => {
+            document.getElementById('results-container').innerHTML = '<div class="alert alert-danger">Erreur lors de la recherche</div>';
         });
 });
+
+// Afficher les résultats de recherche
+function displaySearchResults(bundle, resourceType) {
+    const container = document.getElementById('results-container');
+    
+    if (!bundle.entry || bundle.entry.length === 0) {
+        container.innerHTML = '<div class="alert alert-info">Aucun résultat trouvé</div>';
+        return;
+    }
+    
+    let html = '<div class="row">';
+    
+    bundle.entry.forEach(entry => {
+        const resource = entry.resource;
+        html += '<div class="col-md-6 mb-3">';
+        html += '<div class="card">';
+        html += '<div class="card-body">';
+        
+        switch(resourceType) {
+            case 'Patient':
+                html += `<h5 class="card-title">${resource.name?.[0]?.given?.[0] || ''} ${resource.name?.[0]?.family || ''}</h5>`;
+                html += `<p class="card-text">`;
+                html += `<strong>ID:</strong> ${resource.identifier?.[0]?.value || '-'}<br>`;
+                html += `<strong>Date de naissance:</strong> ${resource.birthDate || '-'}<br>`;
+                html += `<strong>Genre:</strong> ${resource.gender || '-'}`;
+                html += `</p>`;
+                html += `<a href="{{ path('fhir_portal_patient', {id: '__ID__'}) }}".replace('__ID__', ${resource.id}) class="btn btn-primary">Voir détails</a>`;
+                break;
+            // Ajouter les autres types...
+        }
+        
+        html += '</div></div></div>';
+    });
+    
+    html += '</div>';
+    html += `<p class="text-muted mt-3">${bundle.total} résultat(s) trouvé(s)</p>`;
+    
+    container.innerHTML = html;
+}
 </script>
 {% endblock %}
