@@ -126,6 +126,17 @@
 
 {% block javascripts %}
 <script>
+// URLs de l'API FHIR
+const fhirUrls = {
+    Patient: "{{ path('fhir_api_list', {resourceType: 'Patient'}) }}",
+    Practitioner: "{{ path('fhir_api_list', {resourceType: 'Practitioner'}) }}",
+    Observation: "{{ path('fhir_api_list', {resourceType: 'Observation'}) }}",
+    Organization: "{{ path('fhir_api_list', {resourceType: 'Organization'}) }}"
+};
+
+// URL pour la page patient
+const patientDetailUrl = "{{ path('fhir_portal_patient', {id: 'ID_PLACEHOLDER'}) }}";
+
 document.addEventListener('DOMContentLoaded', function() {
     loadStatistics();
 });
@@ -134,7 +145,7 @@ function loadStatistics() {
     const resources = ['Patient', 'Practitioner', 'Observation', 'Organization'];
     
     resources.forEach(resource => {
-        fetch(`{{ path('fhir_api_list', {resourceType: '__TYPE__'}) }}`.replace('__TYPE__', resource) + '?_count=0')
+        fetch(fhirUrls[resource] + '?_count=0')
             .then(response => response.json())
             .then(data => {
                 const elementId = `count-${resource.toLowerCase()}s`;
@@ -153,7 +164,7 @@ function showResources(resourceType) {
     document.getElementById('resourceModalTitle').textContent = `Liste des ${resourceType}s`;
     document.getElementById('resource-list').innerHTML = '<div class="text-center"><div class="spinner-border" role="status"></div></div>';
     
-    fetch(`{{ path('fhir_api_list', {resourceType: '__TYPE__'}) }}`.replace('__TYPE__', resourceType))
+    fetch(fhirUrls[resourceType])
         .then(response => response.json())
         .then(data => {
             displayResourceList(data, resourceType);
@@ -204,7 +215,7 @@ function displayResourceList(bundle, resourceType) {
                 html += `<td>${resource.name?.[0]?.family || '-'}</td>`;
                 html += `<td>${resource.name?.[0]?.given?.[0] || '-'}</td>`;
                 html += `<td>${resource.birthDate || '-'}</td>`;
-                html += `<td><a href="{{ path('fhir_portal_patient', {id: '__ID__'}) }}".replace('__ID__', ${resource.id}) class="btn btn-sm btn-primary">Voir</a></td>`;
+                html += `<td><a href="${patientDetailUrl.replace('ID_PLACEHOLDER', resource.id)}" class="btn btn-sm btn-primary">Voir</a></td>`;
                 break;
         }
         
@@ -215,7 +226,7 @@ function displayResourceList(bundle, resourceType) {
     container.innerHTML = html;
 }
 
-/*document.getElementById('search-form').addEventListener('submit', function(e) {
+document.getElementById('search-form').addEventListener('submit', function(e) {
     e.preventDefault();
     
     const resourceType = document.getElementById('search-type').value;
@@ -226,7 +237,7 @@ function displayResourceList(bundle, resourceType) {
         return;
     }
     
-    let searchUrl = `{{ path('fhir_api_list', {resourceType: '__TYPE__'}) }}`.replace('__TYPE__', resourceType);
+    let searchUrl = fhirUrls[resourceType];
     
     if (resourceType === 'Patient' || resourceType === 'Practitioner') {
         searchUrl += `?name=${encodeURIComponent(query)}`;
@@ -245,7 +256,7 @@ function displayResourceList(bundle, resourceType) {
         .catch(error => {
             document.getElementById('results-container').innerHTML = '<div class="alert alert-danger">Erreur lors de la recherche</div>';
         });
-});*/
+});
 
 function displaySearchResults(bundle, resourceType) {
     const container = document.getElementById('results-container');
@@ -271,7 +282,7 @@ function displaySearchResults(bundle, resourceType) {
                 html += `<strong>Date de naissance:</strong> ${resource.birthDate || '-'}<br>`;
                 html += `<strong>Genre:</strong> ${resource.gender || '-'}`;
                 html += `</p>`;
-                html += `<a href="{{ path('fhir_portal_patient', {id: '__ID__'}) }}".replace('__ID__', ${resource.id}) class="btn btn-primary">Voir détails</a>`;
+                html += `<a href="${patientDetailUrl.replace('ID_PLACEHOLDER', resource.id)}" class="btn btn-primary">Voir détails</a>`;
                 break;
         }
         
