@@ -1,8 +1,8 @@
 # config/routes/idmp.yaml
-idmp_api:
-    resource: '@App/Controller/Api/IdmpController.php'
-    type: annotation
-    prefix: /api/fhir
+#idmp_api:
+#    resource: '@App/Controller/Api/IdmpController.php'
+#    type: annotation
+#    prefix: /api/fhir
 
 # Routes pour MedicinalProduct
 medicinal_product_search:
