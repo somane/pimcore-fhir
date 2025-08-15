@@ -28,11 +28,11 @@ class IdmpSetupCommand extends Command
                 'command' => 'app:idmp:install',
                 'description' => 'Création des classes MedicinalProduct, Substance, etc.'
             ],
-            [
+            /*[
                 'title' => 'Extension de la classe Organization',
                 'command' => 'app:idmp:extend-organization',
                 'description' => 'Ajout des champs IDMP à Organization'
-            ],
+            ],*/
             [
                 'title' => 'Extension de la classe Practitioner',
                 'command' => 'app:idmp:extend-practitioner',
