@@ -262,7 +262,7 @@ class IdmpInstallCommand extends Command
                                 ],
                                 [
                                     "fieldtype" => "select",
-                                    "name" => "type",
+                                    "name" => "productType",
                                     "title" => "Type de produit",
                                     "options" => [
                                         ["key" => "Médicament chimique", "value" => "chemical"],
@@ -654,7 +654,7 @@ class IdmpInstallCommand extends Command
                                 ],
                                 [
                                     "fieldtype" => "select",
-                                    "name" => "type",
+                                    "name" => "packageType",
                                     "title" => "Type de conditionnement",
                                     "options" => [
                                         ["key" => "Boîte", "value" => "box"],
@@ -760,7 +760,7 @@ class IdmpInstallCommand extends Command
                                 ],
                                 [
                                     "fieldtype" => "select",
-                                    "name" => "type",
+                                    "name" => "authorizationType",
                                     "title" => "Type d'autorisation",
                                     "options" => [
                                         ["key" => "AMM nationale", "value" => "national"],
@@ -869,7 +869,7 @@ class IdmpInstallCommand extends Command
                                 ],
                                 [
                                     "fieldtype" => "select",
-                                    "name" => "type",
+                                    "name" => "useType",
                                     "title" => "Type d'usage clinique",
                                     "mandatory" => true,
                                     "options" => [
