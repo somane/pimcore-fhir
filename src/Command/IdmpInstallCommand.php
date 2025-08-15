@@ -178,15 +178,32 @@ class IdmpInstallCommand extends Command
             case 'manyToOneRelation':
                 $field = new Data\ManyToOneRelation();
                 if (isset($config['classes'])) {
-                    $field->setClasses($config['classes']);
+                    $classes = [];
+                    foreach ($config['classes'] as $className) {
+                        $classes[] = [
+                            'classes' => $className,
+                            'pathFormatterClass' => ''
+                        ];
+                    }
+                    $field->setClasses($classes);
                 }
+                $field->setWidth(600);
                 break;
                 
             case 'manyToManyRelation':
                 $field = new Data\ManyToManyRelation();
                 if (isset($config['classes'])) {
-                    $field->setClasses($config['classes']);
+                    $classes = [];
+                    foreach ($config['classes'] as $className) {
+                        $classes[] = [
+                            'classes' => $className,
+                            'pathFormatterClass' => ''
+                        ];
+                    }
+                    $field->setClasses($classes);
                 }
+                $field->setWidth(600);
+                $field->setHeight(200);
                 break;
                 
             case 'objectbricks':

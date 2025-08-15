@@ -135,8 +135,17 @@ class ExtendOrganizationCommand extends Command
             case 'manyToManyRelation':
                 $field = new Data\ManyToManyRelation();
                 if (isset($config['classes'])) {
-                    $field->setClasses($config['classes']);
+                    $classes = [];
+                    foreach ($config['classes'] as $className) {
+                        $classes[] = [
+                            'classes' => $className,
+                            'pathFormatterClass' => ''
+                        ];
+                    }
+                    $field->setClasses($classes);
                 }
+                $field->setWidth(600);
+                $field->setHeight(200);
                 break;
         }
 

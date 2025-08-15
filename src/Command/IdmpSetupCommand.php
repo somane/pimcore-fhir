@@ -95,9 +95,36 @@ class IdmpSetupCommand extends Command
         $io->text('Création de données d\'exemple...');
 
         try {
+            // Vérifier que les dossiers existent
+            $substancesFolder = \Pimcore\Model\DataObject::getByPath('/IDMP/Substances');
+            if (!$substancesFolder) {
+                $io->warning('Le dossier /IDMP/Substances n\'existe pas');
+                return;
+            }
+
+            $productsFolder = \Pimcore\Model\DataObject::getByPath('/IDMP/MedicinalProducts');
+            if (!$productsFolder) {
+                $io->warning('Le dossier /IDMP/MedicinalProducts n\'existe pas');
+                return;
+            }
+
+            // Vérifier que les classes existent
+            $substanceClass = \Pimcore\Model\DataObject\ClassDefinition::getByName('Substance');
+            if (!$substanceClass) {
+                $io->warning('La classe Substance n\'existe pas');
+                return;
+            }
+
+            $productClass = \Pimcore\Model\DataObject\ClassDefinition::getByName('MedicinalProduct');
+            if (!$productClass) {
+                $io->warning('La classe MedicinalProduct n\'existe pas');
+                return;
+            }
+
             // Créer une substance exemple
-            $paracetamol = new \App\Model\DataObject\Substance();
-            $paracetamol->setParent(\Pimcore\Model\DataObject::getByPath('/IDMP/Substances'));
+            $substanceClassName = 'Pimcore\\Model\\DataObject\\Substance';
+            $paracetamol = new $substanceClassName();
+            $paracetamol->setParent($substancesFolder);
             $paracetamol->setKey('paracetamol');
             $paracetamol->setIdentifier('362O9ITL9D');
             $paracetamol->setSubstanceName('Paracétamol');
@@ -106,11 +133,15 @@ class IdmpSetupCommand extends Command
             $paracetamol->setSubstanceType('chemical');
             $paracetamol->setMolecularFormula('C8H9NO2');
             $paracetamol->setMolecularWeight(151.163);
+            $paracetamol->setPublished(true);
             $paracetamol->save();
 
+            $io->text('✓ Substance Paracétamol créée');
+
             // Créer un médicament exemple
-            $doliprane = new \App\Model\DataObject\MedicinalProduct();
-            $doliprane->setParent(\Pimcore\Model\DataObject::getByPath('/IDMP/MedicinalProducts'));
+            $productClassName = 'Pimcore\\Model\\DataObject\\MedicinalProduct';
+            $doliprane = new $productClassName();
+            $doliprane->setParent($productsFolder);
             $doliprane->setKey('doliprane-500mg');
             $doliprane->setMpid('FR-MP-001');
             $doliprane->setName('Doliprane 500mg');
@@ -119,12 +150,63 @@ class IdmpSetupCommand extends Command
             $doliprane->setDomain('human');
             $doliprane->setAtcCode('N02BE01');
             $doliprane->setLegalStatusOfSupply('otc');
+            $doliprane->setPublished(true);
+            
+            // Sauvegarder d'abord le produit
+            $doliprane->save();
+            
+            // Puis ajouter la relation vers la substance
             $doliprane->setIngredient([$paracetamol]);
             $doliprane->save();
 
+            $io->text('✓ Médicament Doliprane 500mg créé');
+
+            // Créer un deuxième exemple
+            $ibuprofen = new $substanceClassName();
+            $ibuprofen->setParent($substancesFolder);
+            $ibuprofen->setKey('ibuprofen');
+            $ibuprofen->setIdentifier('WK2XYI10QM');
+            $ibuprofen->setSubstanceName('Ibuprofène');
+            $ibuprofen->setInn('Ibuprofen');
+            $ibuprofen->setCasNumber('15687-27-1');
+            $ibuprofen->setSubstanceType('chemical');
+            $ibuprofen->setMolecularFormula('C13H18O2');
+            $ibuprofen->setMolecularWeight(206.28);
+            $ibuprofen->setPublished(true);
+            $ibuprofen->save();
+
+            $io->text('✓ Substance Ibuprofène créée');
+
+            $advil = new $productClassName();
+            $advil->setParent($productsFolder);
+            $advil->setKey('advil-400mg');
+            $advil->setMpid('FR-MP-002');
+            $advil->setName('Advil 400mg');
+            $advil->setNonproprietaryName('Ibuprofène');
+            $advil->setProductType('chemical');
+            $advil->setDomain('human');
+            $advil->setAtcCode('M01AE01');
+            $advil->setLegalStatusOfSupply('otc');
+            $advil->setPublished(true);
+            $advil->save();
+            
+            $advil->setIngredient([$ibuprofen]);
+            $advil->save();
+
+            $io->text('✓ Médicament Advil 400mg créé');
+
             $io->success('Données d\'exemple créées avec succès');
+            
+            // Afficher les données créées
+            $io->section('Données créées :');
+            $io->listing([
+                'Substances : Paracétamol (CAS: 103-90-2), Ibuprofène (CAS: 15687-27-1)',
+                'Médicaments : Doliprane 500mg (ATC: N02BE01), Advil 400mg (ATC: M01AE01)'
+            ]);
+            
         } catch (\Exception $e) {
             $io->warning('Impossible de créer les données d\'exemple : ' . $e->getMessage());
+            $io->text('Trace : ' . $e->getTraceAsString());
         }
     }
 }
