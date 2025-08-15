@@ -1,0 +1,47 @@
+# config/routes/idmp.yaml
+idmp_api:
+    resource: '@App/Controller/Api/IdmpController.php'
+    type: annotation
+    prefix: /api/fhir
+
+# Routes pour MedicinalProduct
+medicinal_product_search:
+    path: /api/fhir/MedicinalProduct
+    controller: App\Controller\Api\IdmpController::searchMedicinalProducts
+    methods: GET
+
+medicinal_product_read:
+    path: /api/fhir/MedicinalProduct/{id}
+    controller: App\Controller\Api\IdmpController::getMedicinalProduct
+    methods: GET
+    requirements:
+        id: '\d+'
+
+medicinal_product_create:
+    path: /api/fhir/MedicinalProduct
+    controller: App\Controller\Api\IdmpController::createMedicinalProduct
+    methods: POST
+
+# Routes pour Substance
+substance_search:
+    path: /api/fhir/Substance
+    controller: App\Controller\Api\IdmpController::searchSubstances
+    methods: GET
+
+substance_read:
+    path: /api/fhir/Substance/{id}
+    controller: App\Controller\Api\IdmpController::getSubstance
+    methods: GET
+    requirements:
+        id: '\d+'
+
+# Opérations spéciales
+medicinal_product_lookup:
+    path: /api/fhir/MedicinalProduct/$lookup
+    controller: App\Controller\Api\IdmpController::lookupMedicinalProduct
+    methods: [GET, POST]
+
+idmp_transform:
+    path: /api/fhir/$idmp-transform
+    controller: App\Controller\Api\IdmpController::transformToIdmp
+    methods: POST
