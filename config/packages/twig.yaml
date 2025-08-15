@@ -1,0 +1,7 @@
+twig:
+    default_path: '%kernel.project_dir%/templates'
+    globals:
+        fhir_version: 'R4'
+        app_name: 'FHIR Pimcore'
+    form_themes:
+        - 'bootstrap_5_layout.html.twig'
