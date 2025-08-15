@@ -134,8 +134,8 @@ const fhirUrls = {
     Organization: "{{ path('fhir_api_list', {resourceType: 'Organization'}) }}"
 };
 
-// URL pour la page patient
-const patientDetailUrl = "{{ path('fhir_portal_patient', {id: 'ID_PLACEHOLDER'}) }}";
+// URL de base pour la page patient (sans l'ID)
+const patientDetailBaseUrl = "/fhir/patient/";
 
 document.addEventListener('DOMContentLoaded', function() {
     loadStatistics();
@@ -215,7 +215,31 @@ function displayResourceList(bundle, resourceType) {
                 html += `<td>${resource.name?.[0]?.family || '-'}</td>`;
                 html += `<td>${resource.name?.[0]?.given?.[0] || '-'}</td>`;
                 html += `<td>${resource.birthDate || '-'}</td>`;
-                html += `<td><a href="${patientDetailUrl.replace('ID_PLACEHOLDER', resource.id)}" class="btn btn-sm btn-primary">Voir</a></td>`;
+                html += `<td><a href="${patientDetailBaseUrl}${resource.id}" class="btn btn-sm btn-primary">Voir</a></td>`;
+                break;
+            case 'Practitioner':
+                html += `<td>${resource.id}</td>`;
+                html += `<td>${resource.identifier?.[0]?.value || '-'}</td>`;
+                html += `<td>${resource.name?.[0]?.family || '-'}</td>`;
+                html += `<td>${resource.name?.[0]?.given?.[0] || '-'}</td>`;
+                html += `<td>${resource.qualification?.[0]?.code?.text || '-'}</td>`;
+                html += `<td><button class="btn btn-sm btn-info" onclick="alert('Détail praticien à implémenter')">Voir</button></td>`;
+                break;
+            case 'Observation':
+                html += `<td>${resource.id}</td>`;
+                html += `<td>${resource.code?.coding?.[0]?.code || '-'}</td>`;
+                html += `<td>${resource.code?.text || resource.code?.coding?.[0]?.display || '-'}</td>`;
+                html += `<td>${resource.subject?.reference || '-'}</td>`;
+                html += `<td>${resource.effectiveDateTime ? new Date(resource.effectiveDateTime).toLocaleDateString('fr-FR') : '-'}</td>`;
+                html += `<td><button class="btn btn-sm btn-info" onclick="alert('Détail observation à implémenter')">Voir</button></td>`;
+                break;
+            case 'Organization':
+                html += `<td>${resource.id}</td>`;
+                html += `<td>${resource.identifier?.[0]?.value || '-'}</td>`;
+                html += `<td>${resource.name || '-'}</td>`;
+                html += `<td>${resource.type?.[0]?.text || '-'}</td>`;
+                html += `<td>${resource.telecom?.[0]?.value || '-'}</td>`;
+                html += `<td><button class="btn btn-sm btn-info" onclick="alert('Détail organisation à implémenter')">Voir</button></td>`;
                 break;
         }
         
@@ -282,7 +306,15 @@ function displaySearchResults(bundle, resourceType) {
                 html += `<strong>Date de naissance:</strong> ${resource.birthDate || '-'}<br>`;
                 html += `<strong>Genre:</strong> ${resource.gender || '-'}`;
                 html += `</p>`;
-                html += `<a href="${patientDetailUrl.replace('ID_PLACEHOLDER', resource.id)}" class="btn btn-primary">Voir détails</a>`;
+                html += `<a href="${patientDetailBaseUrl}${resource.id}" class="btn btn-primary">Voir détails</a>`;
+                break;
+            case 'Practitioner':
+                html += `<h5 class="card-title">${resource.name?.[0]?.given?.[0] || ''} ${resource.name?.[0]?.family || ''}</h5>`;
+                html += `<p class="card-text">`;
+                html += `<strong>ID Pro:</strong> ${resource.identifier?.[0]?.value || '-'}<br>`;
+                html += `<strong>Spécialité:</strong> ${resource.qualification?.[0]?.code?.text || '-'}`;
+                html += `</p>`;
+                html += `<button class="btn btn-primary" onclick="alert('Détail praticien à implémenter')">Voir détails</button>`;
                 break;
         }
         
