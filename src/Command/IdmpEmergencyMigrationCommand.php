@@ -133,7 +133,7 @@ class IdmpEmergencyMigrationCommand extends Command
     private function migrateUsingApi(SymfonyStyle $io): void
     {
         // Désactiver temporairement les events pour éviter les boucles
-        \Pimcore::setEventDispatcherEnabled(false);
+        //\Pimcore::setEventDispatcherEnabled(false);
         
         $listing = new DataObject\MedicinalProduct\Listing();
         $listing->setUnpublished(true);
