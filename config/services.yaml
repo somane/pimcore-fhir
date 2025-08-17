@@ -31,9 +31,9 @@ parameters:
 
 services:
     # Override de la classe MedicinalProduct
-    Pimcore\Model\DataObject\MedicinalProduct:
-        class: App\Model\DataObject\MedicinalProduct
-        
+    #Pimcore\Model\DataObject\MedicinalProduct:
+    #    class: App\Model\DataObject\MedicinalProduct
+
     # default configuration for services in *this* file
     _defaults:
         # automatically injects dependencies in your services

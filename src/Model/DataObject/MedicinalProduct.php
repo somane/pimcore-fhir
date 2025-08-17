@@ -2,36 +2,78 @@
 // src/Model/DataObject/MedicinalProduct.php
 namespace App\Model\DataObject;
 
-use Pimcore\Model\DataObject\MedicinalProduct as GeneratedMedicinalProduct;
+use App\Traits\FhirResourceTrait;
+use Pimcore\Model\DataObject;
+use Pimcore\Model\DataObject\MedicinalProduct as BaseMedicinalProduct;
 
-class MedicinalProduct extends GeneratedMedicinalProduct
+class MedicinalProduct extends BaseMedicinalProduct
 {
+    use FhirResourceTrait;
+
     /**
-     * Override pour gérer string et array
+     * Override setName pour gérer string et array
      */
     public function setName($name): self
     {
-        // Si c'est un string, on le laisse passer temporairement
+        // Si c'est un string (ancien format), le convertir
         if (is_string($name)) {
-            // On stocke directement sans conversion pour éviter les erreurs
-            $this->name = null; // On met null au lieu d'un string
-            return $this;
+            // Créer un MedicinalProductName à la volée
+            $productName = new DataObject\MedicinalProductName();
+            $productName->setKey('name-temp-' . md5($name . time()));
+            
+            // Vérifier que le dossier existe
+            $folder = DataObject::getByPath('/IDMP/MedicinalProductNames');
+            if (!$folder) {
+                $folder = new DataObject\Folder();
+                $folder->setKey('MedicinalProductNames');
+                $folder->setParent(DataObject::getByPath('/IDMP'));
+                $folder->save();
+            }
+            
+            $productName->setParent($folder);
+            $productName->setProductName($name);
+            $productName->setPublished(true);
+            
+            // Ne pas sauvegarder ici pour éviter les problèmes de performance
+            // La sauvegarde se fera lors du save() du MedicinalProduct
+            
+            $name = [$productName];
         }
         
-        // Si c'est déjà un array ou null, comportement normal
+        // Appeler la méthode parent avec le format array
         return parent::setName($name);
     }
-    
+
     /**
-     * Override du getName pour gérer les anciens formats
+     * Helper pour récupérer le nom comme string
      */
-    public function getName(): ?array
+    public function getNameAsString(): ?string
     {
-        // Si c'est un string (ne devrait plus arriver), retourner un array vide
-        if (is_string($this->name)) {
-            return [];
+        $names = $this->getName();
+        if (is_array($names) && count($names) > 0) {
+            return $names[0]->getProductName();
+        }
+        if (is_string($names)) {
+            return $names;
+        }
+        return null;
+    }
+
+    /**
+     * Override save pour sauvegarder les relations temporaires
+     */
+    public function save()
+    {
+        // Sauvegarder les MedicinalProductName temporaires
+        $names = $this->getName();
+        if (is_array($names)) {
+            foreach ($names as $name) {
+                if ($name && !$name->getId() && $name instanceof DataObject\MedicinalProductName) {
+                    $name->save();
+                }
+            }
         }
         
-        return parent::getName();
+        return parent::save();
     }
 }
