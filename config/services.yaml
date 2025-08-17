@@ -30,9 +30,11 @@ parameters:
     #pimcore_executable_dot: /usr/bin/dot
 
 services:
-    # Override de la classe MedicinalProduct
-    #Pimcore\Model\DataObject\MedicinalProduct:
-    #    class: App\Model\DataObject\MedicinalProduct
+    App\Command\IdmpCompleteCleanupCommand:
+        arguments:
+            $db: '@doctrine.dbal.default_connection'
+        tags:
+            - { name: console.command }
 
     # default configuration for services in *this* file
     _defaults:
