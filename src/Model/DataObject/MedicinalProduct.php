@@ -1,5 +1,5 @@
 <?php
-// src/Model/DataObject/MedicinalProduct.php
+// src/Model/DataObject/MedicinalProduct.php (version adaptée)
 namespace App\Model\DataObject;
 
 use App\Traits\FhirResourceTrait;
@@ -10,266 +10,118 @@ class MedicinalProduct extends BaseMedicinalProduct
     use FhirResourceTrait;
 
     /**
-     * Convertit l'objet Pimcore en ressource FHIR MedicinalProduct
+     * Helper pour définir un nom simple (rétrocompatibilité)
+     */
+    public function setSimpleName(string $name): self
+    {
+        // Créer un MedicinalProductName
+        $productName = new \Pimcore\Model\DataObject\MedicinalProductName();
+        $productName->setKey('name-' . md5($name . time()));
+        $productName->setParent(\Pimcore\Model\DataObject::getByPath('/IDMP/MedicinalProductNames'));
+        $productName->setProductName($name);
+        $productName->setPublished(true);
+        $productName->save();
+        
+        $this->setName([$productName]);
+        return $this;
+    }
+
+    /**
+     * Helper pour récupérer le nom principal
+     */
+    public function getMainName(): ?string
+    {
+        $names = $this->getName();
+        if (is_array($names) && count($names) > 0) {
+            return $names[0]->getProductName();
+        }
+        return null;
+    }
+
+    /**
+     * Override toFhirResource pour gérer le nouveau format
      */
     public function toFhirResource(): array
     {
         $resource = [
             'resourceType' => 'MedicinalProduct',
-            'id' => $this->getMpid() ?: $this->getId(),
-            'meta' => $this->getFhirMeta(),
-            'identifier' => []
+            'id' => $this->getId(),
+            'meta' => $this->getFhirMeta()
         ];
 
         // Identifiants
-        if ($this->getMpid()) {
-            $resource['identifier'][] = [
-                'system' => 'urn:oid:2.16.840.1.113883.3.1937', // OID pour MPID
-                'value' => $this->getMpid(),
-                'use' => 'official'
-            ];
-        }
-
-        // Nom commercial
-        if ($this->getName()) {
-            $resource['name'] = [[
-                'productName' => $this->getName(),
-                'nameType' => [
-                    'coding' => [[
-                        'system' => 'http://hl7.org/fhir/medicinal-product-name-type',
-                        'code' => 'BAN',
-                        'display' => 'Brand Name'
-                    ]]
-                ]
-            ]];
-        }
-
-        // DCI (Dénomination Commune Internationale)
-        if ($this->getNonproprietaryName()) {
-            $resource['name'][] = [
-                'productName' => $this->getNonproprietaryName(),
-                'nameType' => [
-                    'coding' => [[
-                        'system' => 'http://hl7.org/fhir/medicinal-product-name-type',
-                        'code' => 'INN',
-                        'display' => 'International Nonproprietary Name'
-                    ]]
-                ]
-            ];
-        }
-
-        // Type de produit
-        if ($this->getProductType()) {
-            $resource['type'] = [
-                'coding' => [[
-                    'system' => 'http://hl7.org/fhir/medicinal-product-type',
-                    'code' => $this->getProductType(),
-                    'display' => $this->getProductTypeDisplay()
-                ]]
-            ];
-        }
-
-        // Domaine d'utilisation
-        if ($this->getDomain()) {
-            $resource['domain'] = [
-                'coding' => [[
-                    'system' => 'http://hl7.org/fhir/medicinal-product-domain',
-                    'code' => $this->getDomain(),
-                    'display' => $this->getDomainDisplay()
-                ]]
-            ];
-        }
-
-        // Code ATC
-        if ($this->getAtcCode()) {
-            $resource['classification'] = [[
-                'coding' => [[
-                    'system' => 'http://www.whocc.no/atc',
-                    'code' => $this->getAtcCode()
-                ]]
-            ]];
-        }
-
-        // Statut légal
-        if ($this->getLegalStatusOfSupply()) {
-            $resource['legalStatusOfSupply'] = [
-                'coding' => [[
-                    'system' => 'http://hl7.org/fhir/legal-status-of-supply',
-                    'code' => $this->getLegalStatusOfSupply(),
-                    'display' => $this->getLegalStatusDisplay()
-                ]]
-            ];
-        }
-
-        // Substances actives
-        if ($this->getIngredient()) {
-            $resource['ingredient'] = [];
-            foreach ($this->getIngredient() as $substance) {
-                $resource['ingredient'][] = [
-                    'itemReference' => [
-                        'reference' => 'Substance/' . $substance->getIdentifier()
-                    ]
+        if ($this->getIdentifier()) {
+            $resource['identifier'] = [];
+            foreach ($this->getIdentifier() as $identifier) {
+                $resource['identifier'][] = [
+                    'system' => $identifier->getSystem(),
+                    'value' => $identifier->getIdentifierValue(),
+                    'use' => $identifier->getUse()
                 ];
             }
         }
 
-        // Forme pharmaceutique
-        if ($this->getManufacturedItem()) {
-            $resource['combinedPharmaceuticalDoseForm'] = [
-                'coding' => [[
-                    'system' => 'http://hl7.org/fhir/manufactured-dose-form',
-                    'code' => $this->getManufacturedItem()->getDoseForm()
-                ]]
-            ];
-        }
-
-        // Titulaire de l'AMM
-        if ($this->getMarketingAuthorizationHolder()) {
-            $resource['marketingAuthorization'] = [[
-                'holder' => [
-                    'reference' => 'Organization/' . $this->getMarketingAuthorizationHolder()->getId()
-                ]
-            ]];
-        }
-
-        // Fabricants
-        if ($this->getManufacturer()) {
-            $resource['manufacturingBusinessOperation'] = [];
-            foreach ($this->getManufacturer() as $manufacturer) {
-                $resource['manufacturingBusinessOperation'][] = [
-                    'manufacturer' => [[
-                        'reference' => 'Organization/' . $manufacturer->getId()
-                    ]]
+        // Noms
+        if ($this->getName()) {
+            $resource['name'] = [];
+            foreach ($this->getName() as $name) {
+                $nameData = [
+                    'productName' => $name->getProductName()
                 ];
+                
+                if ($name->getNameType()) {
+                    $nameData['type'] = [
+                        'coding' => [[
+                            'code' => $name->getNameType()->getCodings()[0]->getCode(),
+                            'display' => $name->getNameType()->getText()
+                        ]]
+                    ];
+                }
+                
+                $resource['name'][] = $nameData;
+            }
+        }
+
+        // Type de produit
+        if ($this->getMedicinalProductType()) {
+            $resource['type'] = $this->codeableConceptToFhir($this->getMedicinalProductType());
+        }
+
+        // Domaine
+        if ($this->getDomain()) {
+            $resource['domain'] = $this->codeableConceptToFhir($this->getDomain());
+        }
+
+        // Classifications (ATC)
+        if ($this->getClassification()) {
+            $resource['classification'] = [];
+            foreach ($this->getClassification() as $classification) {
+                $resource['classification'][] = $this->codeableConceptToFhir($classification);
             }
         }
 
         return $resource;
     }
 
-    /**
-     * Importe les données depuis une ressource FHIR
-     */
-    public function fromFhirResource(array $resource): self
+    private function codeableConceptToFhir($concept): array
     {
-        // Identifiants
-        if (isset($resource['identifier'])) {
-            foreach ($resource['identifier'] as $identifier) {
-                if ($identifier['system'] === 'urn:oid:2.16.840.1.113883.3.1937') {
-                    $this->setMpid($identifier['value']);
-                }
+        $result = [];
+        
+        if ($concept->getText()) {
+            $result['text'] = $concept->getText();
+        }
+        
+        if ($concept->getCodings()) {
+            $result['coding'] = [];
+            foreach ($concept->getCodings() as $coding) {
+                $result['coding'][] = [
+                    'system' => $coding->getSystem(),
+                    'code' => $coding->getCode(),
+                    'display' => $coding->getDisplay()
+                ];
             }
         }
-
-        // Noms
-        if (isset($resource['name'])) {
-            foreach ($resource['name'] as $name) {
-                $nameType = $name['nameType']['coding'][0]['code'] ?? null;
-                if ($nameType === 'BAN') {
-                    $this->setName($name['productName']);
-                } elseif ($nameType === 'INN') {
-                    $this->setNonproprietaryName($name['productName']);
-                }
-            }
-        }
-
-        // Type de produit
-        if (isset($resource['type']['coding'][0]['code'])) {
-            $this->setProductType($resource['type']['coding'][0]['code']);
-        }
-
-        // Domaine
-        if (isset($resource['domain']['coding'][0]['code'])) {
-            $this->setDomain($resource['domain']['coding'][0]['code']);
-        }
-
-        // Classification ATC
-        if (isset($resource['classification'])) {
-            foreach ($resource['classification'] as $classification) {
-                if ($classification['coding'][0]['system'] === 'http://www.whocc.no/atc') {
-                    $this->setAtcCode($classification['coding'][0]['code']);
-                }
-            }
-        }
-
-        // Statut légal
-        if (isset($resource['legalStatusOfSupply']['coding'][0]['code'])) {
-            $this->setLegalStatusOfSupply($resource['legalStatusOfSupply']['coding'][0]['code']);
-        }
-
-        return $this;
-    }
-
-    /**
-     * Recherche par code ATC
-     */
-    public static function findByAtcCode(string $atcCode): ?self
-    {
-        $listing = self::getList();
-        $listing->setCondition('atcCode = ?', [$atcCode]);
-        $listing->setLimit(1);
         
-        $results = $listing->load();
-        return $results[0] ?? null;
-    }
-
-    /**
-     * Recherche par DCI
-     */
-    public static function findByInn(string $inn): array
-    {
-        $listing = self::getList();
-        $listing->setCondition('nonproprietaryName LIKE ?', ['%' . $inn . '%']);
-        
-        return $listing->load();
-    }
-
-    /**
-     * Recherche par MPID
-     */
-    public static function findByMpid(string $mpid): ?self
-    {
-        $listing = self::getList();
-        $listing->setCondition('mpid = ?', [$mpid]);
-        $listing->setLimit(1);
-        
-        $results = $listing->load();
-        return $results[0] ?? null;
-    }
-
-    private function getProductTypeDisplay(): string
-    {
-        $types = [
-            'chemical' => 'Médicament chimique',
-            'biological' => 'Médicament biologique',
-            'vaccine' => 'Vaccin',
-            'blood' => 'Produit sanguin',
-            'radiopharmaceutical' => 'Radiopharmaceutique'
-        ];
-        
-        return $types[$this->getProductType()] ?? '';
-    }
-
-    private function getDomainDisplay(): string
-    {
-        $domains = [
-            'human' => 'Usage humain',
-            'veterinary' => 'Usage vétérinaire',
-            'both' => 'Usage humain et vétérinaire'
-        ];
-        
-        return $domains[$this->getDomain()] ?? '';
-    }
-
-    private function getLegalStatusDisplay(): string
-    {
-        $statuses = [
-            'prescription' => 'Sur ordonnance',
-            'otc' => 'Sans ordonnance',
-            'hospital' => 'Usage hospitalier',
-            'narcotic' => 'Stupéfiant'
-        ];
-        
-        return $statuses[$this->getLegalStatusOfSupply()] ?? '';
+        return $result;
     }
 }
