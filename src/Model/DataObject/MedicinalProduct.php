@@ -1,8 +1,9 @@
 <?php
-// src/Model/DataObject/MedicinalProduct.php (version adaptée)
+// src/Model/DataObject/MedicinalProduct.php
 namespace App\Model\DataObject;
 
 use App\Traits\FhirResourceTrait;
+use Pimcore\Model\DataObject;
 use Pimcore\Model\DataObject\MedicinalProduct as BaseMedicinalProduct;
 
 class MedicinalProduct extends BaseMedicinalProduct
@@ -10,118 +11,69 @@ class MedicinalProduct extends BaseMedicinalProduct
     use FhirResourceTrait;
 
     /**
-     * Helper pour définir un nom simple (rétrocompatibilité)
+     * Override setName pour gérer string et array
      */
-    public function setSimpleName(string $name): self
+    public function setName($name): self
     {
-        // Créer un MedicinalProductName
-        $productName = new \Pimcore\Model\DataObject\MedicinalProductName();
-        $productName->setKey('name-' . md5($name . time()));
-        $productName->setParent(\Pimcore\Model\DataObject::getByPath('/IDMP/MedicinalProductNames'));
-        $productName->setProductName($name);
-        $productName->setPublished(true);
-        $productName->save();
+        // Si c'est un string (ancien format), le convertir
+        if (is_string($name)) {
+            // Créer un MedicinalProductName à la volée
+            $productName = new DataObject\MedicinalProductName();
+            $productName->setKey('name-temp-' . md5($name . time()));
+            
+            // Vérifier que le dossier existe
+            $folder = DataObject::getByPath('/IDMP/MedicinalProductNames');
+            if (!$folder) {
+                $folder = new DataObject\Folder();
+                $folder->setKey('MedicinalProductNames');
+                $folder->setParent(DataObject::getByPath('/IDMP'));
+                $folder->save();
+            }
+            
+            $productName->setParent($folder);
+            $productName->setProductName($name);
+            $productName->setPublished(true);
+            
+            // Ne pas sauvegarder ici pour éviter les problèmes de performance
+            // La sauvegarde se fera lors du save() du MedicinalProduct
+            
+            $name = [$productName];
+        }
         
-        $this->setName([$productName]);
-        return $this;
+        // Appeler la méthode parent avec le format array
+        return parent::setName($name);
     }
 
     /**
-     * Helper pour récupérer le nom principal
+     * Helper pour récupérer le nom comme string
      */
-    public function getMainName(): ?string
+    public function getNameAsString(): ?string
     {
         $names = $this->getName();
         if (is_array($names) && count($names) > 0) {
             return $names[0]->getProductName();
         }
+        if (is_string($names)) {
+            return $names;
+        }
         return null;
     }
 
     /**
-     * Override toFhirResource pour gérer le nouveau format
+     * Override save pour sauvegarder les relations temporaires
      */
-    public function toFhirResource(): array
+    public function save()
     {
-        $resource = [
-            'resourceType' => 'MedicinalProduct',
-            'id' => $this->getId(),
-            'meta' => $this->getFhirMeta()
-        ];
-
-        // Identifiants
-        if ($this->getIdentifier()) {
-            $resource['identifier'] = [];
-            foreach ($this->getIdentifier() as $identifier) {
-                $resource['identifier'][] = [
-                    'system' => $identifier->getSystem(),
-                    'value' => $identifier->getIdentifierValue(),
-                    'use' => $identifier->getUse()
-                ];
-            }
-        }
-
-        // Noms
-        if ($this->getName()) {
-            $resource['name'] = [];
-            foreach ($this->getName() as $name) {
-                $nameData = [
-                    'productName' => $name->getProductName()
-                ];
-                
-                if ($name->getNameType()) {
-                    $nameData['type'] = [
-                        'coding' => [[
-                            'code' => $name->getNameType()->getCodings()[0]->getCode(),
-                            'display' => $name->getNameType()->getText()
-                        ]]
-                    ];
+        // Sauvegarder les MedicinalProductName temporaires
+        $names = $this->getName();
+        if (is_array($names)) {
+            foreach ($names as $name) {
+                if ($name && !$name->getId() && $name instanceof DataObject\MedicinalProductName) {
+                    $name->save();
                 }
-                
-                $resource['name'][] = $nameData;
-            }
-        }
-
-        // Type de produit
-        if ($this->getMedicinalProductType()) {
-            $resource['type'] = $this->codeableConceptToFhir($this->getMedicinalProductType());
-        }
-
-        // Domaine
-        if ($this->getDomain()) {
-            $resource['domain'] = $this->codeableConceptToFhir($this->getDomain());
-        }
-
-        // Classifications (ATC)
-        if ($this->getClassification()) {
-            $resource['classification'] = [];
-            foreach ($this->getClassification() as $classification) {
-                $resource['classification'][] = $this->codeableConceptToFhir($classification);
-            }
-        }
-
-        return $resource;
-    }
-
-    private function codeableConceptToFhir($concept): array
-    {
-        $result = [];
-        
-        if ($concept->getText()) {
-            $result['text'] = $concept->getText();
-        }
-        
-        if ($concept->getCodings()) {
-            $result['coding'] = [];
-            foreach ($concept->getCodings() as $coding) {
-                $result['coding'][] = [
-                    'system' => $coding->getSystem(),
-                    'code' => $coding->getCode(),
-                    'display' => $coding->getDisplay()
-                ];
             }
         }
         
-        return $result;
+        return parent::save();
     }
 }
